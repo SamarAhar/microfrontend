@@ -36,38 +36,40 @@ export default function TaskList() {
   }
 
   return (
-    <div className="bg-white p-6 h-full">
-      <h2 className="text-2xl font-semibold mb-4">Product List</h2>
+   <div className="bg-white p-6 rounded-2xl shadow-md mx-4 md:mx-8 h-full">
+      <h2 className="text-2xl font-semibold mb-6 text-gray-800">Product List</h2>
       <div className="space-y-4">
-        {products.length === 0 ? (
-          <div className="p-4 border rounded-3xl bg-[#f2cece] text-center">
-            <p className="text-gray-600">No products yet. Add a product to get started!</p>
+        {loading && products.length === 0 ? (
+          <div className="p-4 border rounded-xl bg-gray-50 text-center text-gray-500">
+            Loading products...
+          </div>
+        ) : products.length === 0 ? (
+          <div className="p-4 border rounded-xl bg-gray-50 text-center text-gray-500">
+            No products found.
           </div>
         ) : (
           products.map((product) => (
             <div
               key={product.id}
-              className="p-4 border rounded-3xl bg-[#f2cece] hover:shadow-md transition-shadow"
+              className="p-4 border rounded-xl bg-gray-50 hover:shadow transition-shadow"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{product.productName}</h3>
-                  <p className="text-gray-600 mt-1">{product.category || 'No category'}</p>
-                  <div className="mt-2 text-sm text-gray-500">
-                    <span>Price: ₹{product.price.toFixed(2)}</span>
-                  </div>
+                  <h3 className="font-semibold text-lg text-gray-800">{product.productName}</h3>
+                  <p className="text-gray-600">Category: {product.category || 'N/A'}</p>
+                  <p className="text-gray-600">Price: ₹{product.price.toFixed(2)}</p>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button
                     onClick={() => handleEdit(product)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    className="p-2 text-blue-600 hover:bg-blue-100 rounded-full"
                     title="Edit"
                   >
                     <FaEdit />
                   </button>
                   <button
                     onClick={() => handleDelete(product.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                    className="p-2 text-red-600 hover:bg-red-100 rounded-full"
                     title="Delete"
                   >
                     <FaTrash />
