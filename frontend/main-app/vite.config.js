@@ -14,7 +14,7 @@ export default defineConfig({
         ordersApp: 'http://localhost:5002/assets/remoteEntry.js',
         usersApp : 'http://localhost:5003/assets/remoteEntry.js',
       },
-      shared: ['react', 'react-dom', 'react-redux', 'react-toastify'],
+      shared: ['react', 'react-dom', 'react-redux', 'react-toastify', '@apollo/client', 'graphql'],
     }),
   ],
   build:{

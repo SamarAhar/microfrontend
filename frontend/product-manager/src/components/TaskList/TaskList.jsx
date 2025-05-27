@@ -1,20 +1,23 @@
-import { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useQuery, useMutation } from '@apollo/client';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { 
-  fetchProducts, 
-  deleteProduct, 
-  setEditingProduct 
-} from '../../store/productSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { DELETE_PRODUCT, GET_ALL_PRODUCTS } from '../../graphql/queries';
+import { setEditingProduct, setFilter } from '../../redux/slices/productSlice';
 
 export default function TaskList() {
   const dispatch = useDispatch();
-  const { products, error, loading } = useSelector((state) => state.products);
+  const { filter } = useSelector((state) => state.products);
+  
+  // GraphQL queries and mutations
+  const { loading, error, data } = useQuery(GET_ALL_PRODUCTS);
+  const [deleteProductMutation] = useMutation(DELETE_PRODUCT);
 
-  useEffect(() => {
-    dispatch(fetchProducts());
-  }, [dispatch]);
+  // Transform and filter products
+  const products = data?.getAllProduct || [];
+  const filteredProducts = products.filter(product => 
+    filter ? product.category === filter : true
+  );
 
   const handleEdit = (product) => {
     dispatch(setEditingProduct(product));
@@ -22,42 +25,69 @@ export default function TaskList() {
 
   const handleDelete = async (productId) => {
     try {
-      dispatch(deleteProduct(productId));
+      await deleteProductMutation({
+        variables: { id: productId },
+        refetchQueries: [{ query: GET_ALL_PRODUCTS }]
+      });
       toast.success('Product deleted successfully!');
     } catch (err) {
       toast.error(err.message || 'Error deleting product!');
     }
   };
 
-  if (loading && products.length === 0) return <p>Loading products...</p>;
+  // Handle loading and error states
+  if (loading) {
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-md mx-4 md:mx-8 h-full">
+        <div className="p-4 border rounded-xl bg-gray-50 text-center text-gray-500">
+          Loading products...
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
-    toast.error(error);
-    return <p>Error: {error}</p>;
+    return (
+      <div className="bg-white p-6 rounded-2xl shadow-md mx-4 md:mx-8 h-full">
+        <div className="p-4 border rounded-xl bg-red-50 text-center text-red-500">
+          Error: {error.message}
+        </div>
+      </div>
+    );
   }
 
   return (
-   <div className="bg-white p-6 rounded-2xl shadow-md mx-4 md:mx-8 h-full">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800">Product List</h2>
+    <div className="bg-white p-6 rounded-2xl shadow-md md:mx-8 ">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold text-gray-800">Product List</h2>
+        <select 
+          className="p-2 border rounded-lg"
+          value={filter}
+          onChange={(e) => dispatch(setFilter(e.target.value))}
+        >
+          <option value="">All Categories</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Books">Books</option>
+        </select>
+      </div>  
       <div className="space-y-4">
-        {loading && products.length === 0 ? (
-          <div className="p-4 border rounded-xl bg-gray-50 text-center text-gray-500">
-            Loading products...
-          </div>
-        ) : products.length === 0 ? (
+        {filteredProducts.length === 0 ? (
           <div className="p-4 border rounded-xl bg-gray-50 text-center text-gray-500">
             No products found.
           </div>
         ) : (
-          products.map((product) => (
+          filteredProducts.map((product) => (
             <div
               key={product.id}
               className="p-4 border rounded-xl bg-gray-50 hover:shadow transition-shadow"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-gray-800">{product.productName}</h3>
+                  <h3 className="font-semibold text-lg text-gray-800">{product.productName}</h3> {/* Changed from name to productName */}
                   <p className="text-gray-600">Category: {product.category || 'N/A'}</p>
                   <p className="text-gray-600">Price: ₹{product.price.toFixed(2)}</p>
+                  {/* Removed Stock field */}
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button

@@ -14,7 +14,7 @@ export default defineConfig({
       exposes: {
         './App': './src/App',
       },
-      shared: ['react', 'react-dom', 'react-redux', 'react-toastify', 'axios'],
+      shared: ['react', 'react-dom', 'react-redux', 'react-toastify', 'axios', '@apollo/client', 'graphql'],
     }),
   ],
   build:{

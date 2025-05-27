@@ -1,31 +1,40 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useMutation } from '@apollo/client';
 import { toast } from 'react-toastify';
-import {
-  createProduct,
-  updateProduct,
-  setEditingProduct,
-} from '../../store/productSlice';
+import { CREATE_PRODUCT, UPDATE_PRODUCT } from '../../graphql/queries';
+import { setEditingProduct } from '../../redux/slices/productSlice';
 
 export default function TaskForm() {
-  const [name, setName] = useState('');
+  const [productName, setProductName] = useState(''); 
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [editingId, setEditingId] = useState(null);
 
   const dispatch = useDispatch();
-  const { editingProduct, loading } = useSelector((state) => state.products);
+  const { editingProduct } = useSelector((state) => state.products);
+
+  // GraphQL mutations
+  const [createProductMutation, { loading: createLoading }] = useMutation(CREATE_PRODUCT, {
+    refetchQueries: ['GetAllProducts'] 
+  });
+  
+  const [updateProductMutation, { loading: updateLoading }] = useMutation(UPDATE_PRODUCT, {
+    refetchQueries: ['GetAllProducts'] 
+  });
+
+  const loading = createLoading || updateLoading;
 
   // Update form fields when editingProduct changes
   useEffect(() => {
     if (editingProduct) {
       setEditingId(editingProduct.id);
-      setName(editingProduct.productName);
+      setProductName(editingProduct.productName || ''); 
       setCategory(editingProduct.category || '');
       setPrice(editingProduct.price ? editingProduct.price.toString() : '');
     } else {
       setEditingId(null);
-      setName('');
+      setProductName(''); 
       setCategory('');
       setPrice('');
     }
@@ -35,7 +44,7 @@ export default function TaskForm() {
     e.preventDefault();
 
     const productData = {
-      productName: name.trim(),
+      productName: productName.trim(), 
       category: category.trim() || null,
       price: parseFloat(price) || 0,
     };
@@ -43,18 +52,26 @@ export default function TaskForm() {
     try {
       if (editingId) {
         // Update existing product
-        dispatch(updateProduct(editingId, productData));
+        await updateProductMutation({
+          variables: {
+            product: {
+              id: editingId,
+              ...productData
+            }
+          }
+        });
         toast.success('Product updated successfully!');
       } else {
         // Add new product
-        dispatch(createProduct(productData));
+        await createProductMutation({
+          variables: {
+            product: productData
+          }
+        });
         toast.success('Product added successfully!');
       }
       // Reset form
-      setEditingId(null);
-      setName('');
-      setCategory('');
-      setPrice('');
+      handleCancel();
     } catch (err) {
       toast.error(err.message || (editingId ? 'Error updating product!' : 'Error adding product!'));
     }
@@ -63,7 +80,7 @@ export default function TaskForm() {
   const handleCancel = () => {
     dispatch(setEditingProduct(null));
     setEditingId(null);
-    setName('');
+    setProductName(''); 
     setCategory('');
     setPrice('');
   };
@@ -78,8 +95,8 @@ export default function TaskForm() {
           <label className="block text-sm font-medium text-gray-700 mb-1">Product Name*</label>
           <input
             type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={productName} // Changed to productName
+            onChange={(e) => setProductName(e.target.value)} // Changed to setProductName
             placeholder="Enter your product name here"
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 transition"
             required
@@ -87,13 +104,16 @@ export default function TaskForm() {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Category (Optional)</label>
-          <input
-            type="text"
+          <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            placeholder="Enter category here"
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 transition"
-          />
+          >
+            <option value="">Select Category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Clothing">Clothing</option>
+            <option value="Books">Books</option>
+          </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
@@ -105,14 +125,15 @@ export default function TaskForm() {
             onChange={(e) => setPrice(e.target.value)}
             placeholder="Enter product price"
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 transition"
+            required
           />
         </div>
         <div className="flex gap-3 mt-6">
           <button
             type="submit"
-            disabled={!name.trim() || loading}
+            disabled={!productName.trim() || loading} // Changed to productName
             className={`flex-1 px-4 py-2 rounded-lg text-white font-medium transition ${
-              name.trim() && !loading
+              productName.trim() && !loading // Changed to productName
                 ? 'bg-red-600 hover:bg-red-700'
                 : 'bg-gray-400 cursor-not-allowed'
             }`}

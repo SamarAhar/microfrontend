@@ -25,7 +25,7 @@ export default function OrderForm({ refreshOrders }) {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/products');
+      const res = await axios.get('http://localhost:8080/products/graphql');
       setProducts(res.data);
     } catch {
       toast.error('Failed to fetch products', { position: 'top-center' });
