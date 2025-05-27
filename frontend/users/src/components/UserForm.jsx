@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useMutation } from '@apollo/client';
+import { ADD_USER, UPDATE_USER, GET_USERS } from '../queries/graphql';
 import { toast } from 'react-toastify';
 
 export default function UserForm({ editingUser, setEditingUser, refreshUsers }) {
@@ -22,19 +23,24 @@ export default function UserForm({ editingUser, setEditingUser, refreshUsers }) 
     }
   }, [editingUser]);
 
-  const handleSubmit = async (e) => {
+   const [addUser] = useMutation(ADD_USER, {
+    refetchQueries: [{ query: GET_USERS }],
+  });
+
+  const [updateUser] = useMutation(UPDATE_USER, {
+    refetchQueries: [{ query: GET_USERS }],
+  });
+
+ const handleSubmit = async (e) => {
     e.preventDefault();
-    const userData = { name, phoneNo, email, address };
+    const input = { name, phoneNo, email, address };
 
     try {
       if (editingUser) {
-        await axios.put(`http://localhost:8080/users/${editingUser.id}`, {
-          ...userData,
-          id: editingUser.id,
-        });
+        await updateUser({ variables: { user: { ...input, id: editingUser.id } } });
         toast.success('User updated successfully!', { position: 'top-center' });
       } else {
-        await axios.post('http://localhost:8080/users', userData);
+        await addUser({ variables: { user:input } });
         toast.success('User added successfully!', { position: 'top-center' });
       }
       refreshUsers();

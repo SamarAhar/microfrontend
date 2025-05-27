@@ -1,33 +1,27 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useQuery, useMutation } from '@apollo/client';
+import { GET_USERS, DELETE_USER } from '../queries/graphql';
 import { toast } from 'react-toastify';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
 export default function UserList({ setEditingUser, refreshTrigger }) {
-  const [users, setUsers] = useState([]);
+  const { data, loading, error, refetch } = useQuery(GET_USERS);
+  const [deleteUser] = useMutation(DELETE_USER, {
+    refetchQueries: [{ query: GET_USERS }],
+  });
 
-  const fetchUsers = async () => {
+  const handleDeleteUser = async (id) => {
     try {
-      const res = await axios.get('http://localhost:8080/users');
-      setUsers(res.data);
-    } catch {
-      toast.error('Failed to fetch users', { position: 'top-center' });
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    try {
-      await axios.delete(`http://localhost:8080/users/${userId}`);
+      await deleteUser({ variables: { id } });
       toast.success('User deleted successfully!', { position: 'top-center' });
-      fetchUsers(); // Refresh immediately after deletion
     } catch {
       toast.error('Error deleting user', { position: 'top-center' });
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, [refreshTrigger]); // <-- Triggered when flag changes
+  if (loading) return <p className="text-center">Loading...</p>;
+  if (error) return <p className="text-center text-red-500">Error loading users.</p>;
+
+  const users = data?.getAllUser || [];
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-md mx-4 md:mx-8 h-full">
