@@ -1,36 +1,31 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { useQuery } from '@apollo/client';
+import { GET_USER, GET_PRODUCT } from '../graphql/queries';
+import clients from '../../apolloClient';
 
 export default function OrderForm({ refreshOrders }) {
   const [userId, setUserId] = useState('');
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [users, setUsers] = useState([]);
-  const [products, setProducts] = useState([]);
+
+  const { data: usersData, loading: usersLoading, error: usersError } = useQuery(GET_USER, {
+    client: clients.userClient
+  });
+  
+  const { data: productsData, loading: productsLoading, error: productsError } = useQuery(GET_PRODUCT, {
+    client: clients.productClient
+  });
 
   useEffect(() => {
-    fetchUsers();
-    fetchProducts();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await axios.get('http://localhost:8080/users');
-      setUsers(res.data);
-    } catch {
+    if (usersError) {
       toast.error('Failed to fetch users', { position: 'top-center' });
     }
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const res = await axios.get('http://localhost:8080/products/graphql');
-      setProducts(res.data);
-    } catch {
+    if (productsError) {
       toast.error('Failed to fetch products', { position: 'top-center' });
     }
-  };
+  }, [usersError, productsError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,9 +63,10 @@ export default function OrderForm({ refreshOrders }) {
             onChange={(e) => setUserId(e.target.value)}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 transition"
             required
+            disabled={usersLoading}
           >
             <option value="">Select user</option>
-            {users.map((user) => (
+            {usersData?.getAllUser?.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.name}
               </option>
@@ -84,9 +80,10 @@ export default function OrderForm({ refreshOrders }) {
             onChange={(e) => setProductId(e.target.value)}
             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-red-400 transition"
             required
+            disabled={productsLoading}
           >
             <option value="">Select product</option>
-            {products.map((product) => (
+            {productsData?.getAllProduct?.map((product) => (
               <option key={product.id} value={product.id}>
                 {product.productName}
               </option>
