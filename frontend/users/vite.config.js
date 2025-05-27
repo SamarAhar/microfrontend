@@ -13,13 +13,7 @@ export default defineConfig({
        exposes: {
           './App': './src/App',
        },
-      shared: {
-        react: { singleton: true, eager: true },
-        'react-dom': { singleton: true, eager: true },
-        'react-toastify': { singleton: true},
-        graphql: { singleton: true },
-        '@apollo/client': { singleton: true},
-      },
+      shared: ['react', 'react-dom', 'react-toastify', 'axios', '@apollo/client', 'graphql'],
     }),
   ],
   build: {
