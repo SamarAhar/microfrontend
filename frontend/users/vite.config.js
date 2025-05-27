@@ -8,12 +8,18 @@ export default defineConfig({
     react(),
     tailwindcss(),
     federation({
-      name: 'user',
+      name: 'usersApp',
       filename: 'remoteEntry.js',
        exposes: {
           './App': './src/App',
        },
-      shared: ['react', 'react-dom', 'react-toastify', 'axios'],
+      shared: {
+        react: { singleton: true, eager: true },
+        'react-dom': { singleton: true, eager: true },
+        'react-toastify': { singleton: true},
+        graphql: { singleton: true },
+        '@apollo/client': { singleton: true},
+      },
     }),
   ],
   build: {
